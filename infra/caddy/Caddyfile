@@ -1,0 +1,14 @@
+:80 {
+
+    handle_path /api/ml/* {
+        reverse_proxy ml-service:8000
+    }
+
+    handle_path /api/data/* {
+        reverse_proxy data-service:8000
+    }
+
+    handle {
+        reverse_proxy dashboard:3000
+    }
+}

@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:latest
+    container_name: enma-caddy
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - enma-net
+    depends_on:
+      - ml-service
+      - data-service
+      - dashboard
+
+  ml-service:
+    build: ./services/ml-service
+    container_name: ml-service
+    expose:
+      - "8000"
+    networks:
+      - enma-net
+
+  data-service:
+    build: ./services/data-service
+    container_name: data-service
+    expose:
+      - "8000"
+    networks:
+      - enma-net
+
+  dashboard:
+    build: ./services/dashboard
+    container_name: dashboard
+    expose:
+      - "3000"
+    networks:
+      - enma-net
+
+networks:
+  enma-net:
+    external: true
