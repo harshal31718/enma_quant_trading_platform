@@ -34,10 +34,15 @@ trading_state = "ENABLED"
 cooldown_remaining = 0
 
 
-# MOCK SIGNAL ------------------
-def mock_signal():
-    return random.choice(["LONG", "FLAT"])
+# SIGNAL ------------------
+class SignalProvider:
+    def __init__(self, seed=42):
+        random.seed(seed)
 
+    def get_signal(self, timestamp):
+        return random.choice(["LONG", "FLAT"])
+
+signal_provider = SignalProvider(seed=RANDOM_SEED)
 
 # BACKTEST LOOP --------------
 for idx, row in df.iterrows():
@@ -47,7 +52,7 @@ for idx, row in df.iterrows():
 
     candle_range = high - low
     slippage = candle_range * SLIPPAGE_PCT
-    signal = mock_signal()
+    signal = signal_provider.get_signal(row["timestamp"])
 
     # Handle cooldown
     if trading_state == "COOLDOWN":
