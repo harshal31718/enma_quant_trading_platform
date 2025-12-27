@@ -3,27 +3,18 @@ import ccxt
 import pandas as pd
 from pathlib import Path
 
-app = FastAPI(
-    title="Data Service",
-    root_path="/api/data"
-)
+app = FastAPI(title="Data Service", root_path="/api/data")
 
-DATA_DIR = Path("/data")
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR = Path("/app/data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-exchange = ccxt.binance({
-    "enableRateLimit": True,
-    "options": {
-        "defaultType": "future"
-    }
-})
+exchange = ccxt.binance({"enableRateLimit": True, "options": {"defaultType": "future"}})
 
 
 def fetch_ohlcv(symbol: str, timeframe: str = "15m", limit: int = 500):
     ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
     df = pd.DataFrame(
-        ohlcv,
-        columns=["timestamp", "open", "high", "low", "close", "volume"]
+        ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
     )
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     return df
@@ -38,7 +29,7 @@ def health():
 def get_historical(
     symbol: str = Query(..., example="BTC/USDT"),
     timeframe: str = "15m",
-    limit: int = 500
+    limit: int = 500,
 ):
     df = fetch_ohlcv(symbol, timeframe, limit)
 
@@ -49,5 +40,5 @@ def get_historical(
         "symbol": symbol,
         "timeframe": timeframe,
         "rows": len(df),
-        "candles": df.to_dict(orient="records")
+        "candles": df.to_dict(orient="records"),
     }

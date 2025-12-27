@@ -26,6 +26,8 @@ services:
   data-service:
     build: ./services/data-service
     container_name: data-service
+    volumes:
+      - ./data:/app/data
     expose:
       - "8000"
     networks:
