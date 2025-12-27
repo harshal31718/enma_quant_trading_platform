@@ -8,7 +8,7 @@ app = FastAPI(
     root_path="/api/data"
 )
 
-DATA_DIR = Path("/app/data")
+DATA_DIR = Path("/data")
 DATA_DIR.mkdir(exist_ok=True)
 
 exchange = ccxt.binance({
