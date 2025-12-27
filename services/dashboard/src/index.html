@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ENMA Dashboard</title>
+  <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    #chart {
+      width: 100%;
+      height: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>BTC/USDT – 15m (Binance Futures)</h2>
+  <div id="chart"></div>
+  <script>
+    window.addEventListener("load", () => {
+      const container = document.getElementById("chart");
+
+      const chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 500,
+        layout: {
+          backgroundColor: "#ffffff",
+          textColor: "#000",
+        },
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      const candleSeries = chart.addCandlestickSeries();
+      const volumeSeries = chart.addHistogramSeries({
+        priceFormat: { type: "volume" },
+        priceScaleId: "",
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
+
+      fetch("/api/data/historical?symbol=BTC/USDT&limit=200")
+        .then(res => res.json())
+        .then(data => {
+          const sorted = data.candles
+            .map(c => ({
+              time: Math.floor(new Date(c.timestamp).getTime() / 1000),
+              open: Number(c.open),
+              high: Number(c.high),
+              low: Number(c.low),
+              close: Number(c.close),
+              volume: Number(c.volume),
+            }))
+            .sort((a, b) => a.time - b.time);
+
+          candleSeries.setData(
+            sorted.map(c => ({
+              time: c.time,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close,
+            }))
+          );
+
+          volumeSeries.setData(
+            sorted.map(c => ({
+              time: c.time,
+              value: c.volume,
+              color: c.close >= c.open ? "#26a69a" : "#ef5350",
+            }))
+          );
+
+          chart.timeScale().fitContent();
+        });
+
+      window.addEventListener("resize", () => {
+        chart.resize(container.clientWidth, 500);
+      });
+    });
+  </script>
+</body>
+
+</html>
