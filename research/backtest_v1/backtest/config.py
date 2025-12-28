@@ -6,14 +6,31 @@ INITIAL_CAPITAL = 10_000
 FEE_RATE = 0.0004
 SLIPPAGE_PCT = 0.10
 # Portfolio risk
+MAX_PORTFOLIO_NOTIONAL = 0.80  # max 80% of equity can be deployed
 PORTFOLIO_MAX_RISK = 0.40
 # Risk control
 MAX_DRAWDOWN = 0.30
 COOLDOWN_CANDLES = 15
-# Reproducibility       
+# Reproducibility
 RANDOM_SEED = 42
 
 # SYMBOL CONFIG
+SYMBOL_MAX_RISK = {
+    "BTC": 0.30,
+    "ETH": 0.20,
+    "BNB": 0.20,
+}
+RISK_BUCKETS = {
+    "MAJORS": {
+        "symbols": ["BTC", "ETH"],
+        "max_risk": 0.30,
+    },
+    "ALTS": {
+        "symbols": ["BNB"],
+        "max_risk": 0.20,
+    },
+}
+
 symbols_config = {
     "BTC": {
         "risk_pct": 0.15,

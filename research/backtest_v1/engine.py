@@ -21,7 +21,12 @@ max_dd_seen = 0.0
 trading_state = "ENABLED"
 cooldown_remaining = 0
 
-portfolio = PortfolioRisk(max_risk=PORTFOLIO_MAX_RISK)
+portfolio = PortfolioRisk(
+    max_risk=PORTFOLIO_MAX_RISK,
+    max_notional=MAX_PORTFOLIO_NOTIONAL,
+    symbol_caps=SYMBOL_MAX_RISK,
+)
+portfolio.setup_buckets(RISK_BUCKETS)
 
 # SIGNAL PROVIDER
 signal_provider = SignalProvider()
@@ -79,7 +84,7 @@ for ts in common_index:
                 SLIPPAGE_PCT,
             )
 
-            portfolio.release(p["risk_pct"])
+            portfolio.release(s, p["risk_pct"], p["notional"])
             positions[s] = {"qty": 0.0, "entry": None, "risk_pct": 0.0}
 
     # ---- entries ----
@@ -89,7 +94,12 @@ for ts in common_index:
 
         if positions[s]["qty"] == 0 and signal_provider.get_signal(s, ts) == "LONG":
             requested = cfg["risk_pct"]
-            applied = portfolio.allocate(requested)
+            applied = portfolio.allocate(
+                symbol=s,
+                requested_risk=requested,
+                equity=equity,
+                requested_notional=equity * requested,
+            )
 
             if applied <= 0:
                 continue
@@ -113,8 +123,8 @@ for ts in common_index:
                 "qty": result["qty"],
                 "entry": result["entry_price"],
                 "risk_pct": applied,
+                "notional": equity * applied,
             }
-
 
 # RESULTS
 print(f"Initial Capital: {INITIAL_CAPITAL}")
