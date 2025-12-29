@@ -1,14 +1,20 @@
 # type: ignore
+import json
 import pandas as pd
+from pathlib import Path
 from backtest.config import *
 from backtest.signals import SignalProvider
 from backtest.portfolio import PortfolioRisk
 from backtest.execution import open_position, close_position
 from backtest.data_loader import load_price_data
+from backtest.metrics import TradeLog, equity_metrics, sharpe_and_cagr
 
+OUTPUT_DIR = Path("outputs")
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 # LOAD DATA
 data, common_index = load_price_data(symbols_config)
+trade_log = TradeLog()
 
 # STATE
 cash = INITIAL_CAPITAL
@@ -86,6 +92,11 @@ for ts in common_index:
 
             portfolio.release(s, p["risk_pct"], p["notional"])
             positions[s] = {"qty": 0.0, "entry": None, "risk_pct": 0.0}
+            trade_log.close(
+                symbol=s,
+                time=ts,
+                price=prices[s],
+            )
 
     # ---- entries ----
     for s, cfg in symbols_config.items():
@@ -125,11 +136,68 @@ for ts in common_index:
                 "risk_pct": applied,
                 "notional": equity * applied,
             }
+            trade_log.open(
+                symbol=s,
+                time=ts,
+                price=result["entry_price"],
+                qty=result["qty"],
+            )
 
-# RESULTS
-print(f"Initial Capital: {INITIAL_CAPITAL}")
-print(f"Final Equity: {round(equity_curve[-1], 2)}")
-print(f"Max Drawdown: {round(max_dd_seen * 100, 2)} %")
-print(f"Used Risk at End: {round(portfolio.used_risk * 100, 2)} %")
-print(f"Trading State at End: {trading_state}")
-print(f"Symbols traded: {list(symbols_config.keys())}")
+
+equity_metrics_result = equity_metrics(equity_curve)
+risk_metrics_result = sharpe_and_cagr(equity_curve)
+results = {
+    "equity_metrics": equity_metrics_result,
+    "risk_metrics": risk_metrics_result,
+    "summary": {
+        "initial_capital": INITIAL_CAPITAL,
+        "final_equity": round(equity_curve[-1], 2),
+        "max_drawdown_pct": round(max_dd_seen * 100, 2),
+        "used_risk_pct": round(portfolio.used_risk * 100, 2),
+        "trading_state": trading_state,
+        "symbols": list(symbols_config.keys()),
+        "total_trades": len(trade_log.results()),
+    },
+}
+
+print("=== EQUITY METRICS ===")
+for k, v in results["equity_metrics"].items():
+    print(f"{k}: {v}")
+
+print("=== RISK METRICS ===")
+for k, v in results["risk_metrics"].items():
+    print(f"{k}: {v}")
+
+
+equity_df = pd.DataFrame(
+    {
+        "timestamp": common_index,
+        "equity": equity_curve,
+    }
+)
+equity_df.to_csv(OUTPUT_DIR / "equity_curve.csv", index=False)
+
+
+trades = trade_log.results()
+
+trades_df = pd.DataFrame(
+    [
+        {
+            "symbol": t.symbol,
+            "entry_time": t.entry_time,
+            "entry_price": t.entry_price,
+            "exit_time": t.exit_time,
+            "exit_price": t.exit_price,
+            "qty": t.qty,
+            "pnl": t.pnl,
+            "pnl_pct": t.pnl_pct,
+        }
+        for t in trades
+    ]
+)
+
+trades_df.to_csv(OUTPUT_DIR / "trades.csv", index=False)
+
+
+with open(OUTPUT_DIR / "metrics.json", "w") as f:
+    json.dump(results, f, indent=2)

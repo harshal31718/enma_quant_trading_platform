@@ -1,0 +1,24 @@
+{
+  "equity_metrics": {
+    "final_equity": 9419.43,
+    "return_pct": -5.81,
+    "max_drawdown_pct": 6.15
+  },
+  "risk_metrics": {
+    "sharpe": -49.157,
+    "cagr_pct": -98.49
+  },
+  "summary": {
+    "initial_capital": 10000,
+    "final_equity": 9419.43,
+    "max_drawdown_pct": 6.15,
+    "used_risk_pct": 20.0,
+    "trading_state": "ENABLED",
+    "symbols": [
+      "BTC",
+      "ETH",
+      "BNB"
+    ],
+    "total_trades": 479
+  }
+}
