@@ -19,6 +19,9 @@
 <body>
   <h2>BTC/USDT – 15m (Binance Futures)</h2>
   <div id="chart"></div>
+  <h2 style="margin-top:40px;">Equity Curve</h2>
+  <div id="equity-chart" style="width:100%; height:400px;"></div>
+
   <script>
     window.addEventListener("load", () => {
       const container = document.getElementById("chart");
@@ -83,6 +86,39 @@
       });
     });
   </script>
+  <script>
+    const equityChart = LightweightCharts.createChart(
+      document.getElementById("equity-chart"),
+      {
+        width: window.innerWidth - 40,
+        height: 400,
+        layout: { background: { color: "#ffffff" }, textColor: "#000" },
+        grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      }
+    );
+
+    const equitySeries = equityChart.addLineSeries({
+      color: "#16a34a",
+      lineWidth: 2,
+    });
+
+    fetch("/public/equity_curve.csv")
+      .then(res => res.text())
+      .then(text => {
+        const rows = text.trim().split("\n").slice(1);
+
+        const data = rows.map(row => {
+          const [time, equity] = row.split(",");
+          return {
+            time: Math.floor(new Date(time).getTime() / 1000),
+            value: parseFloat(equity),
+          };
+        });
+
+        equitySeries.setData(data);
+      });
+  </script>
+
 </body>
 
 </html>
