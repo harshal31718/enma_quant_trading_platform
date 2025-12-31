@@ -1,9 +1,22 @@
+# type: ignore
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 import ccxt
 import pandas as pd
 from pathlib import Path
 
 app = FastAPI(title="Data Service", root_path="/api/data")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 DATA_DIR = Path("/app/data")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
